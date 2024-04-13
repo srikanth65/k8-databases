@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: roboshop
+  labels:
+    app: mysql
+    project: roboshop
+    tier: db
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+      project: roboshop
+      tier: db
+  serviceName: "mysql"
+  replicas: {{ .Values.stateful.replicas }} # by default is 1
+  #minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels:    # has to match .spec.selector.matchLabels
+        app: mysql
+        project: roboshop
+        tier: db
+    spec:
+   #   terminationGracePeriodSeconds: 10
+      containers:
+      - name: nginx
+        envFrom:
+          - configMapRef:
+              name: mysql
+          - secretRef:
+              name: mysql
+        image: "joindevops/mysql:{{ .Values.stateful.imageVersion }}"
+        args:
+        - "--ignore-db-dir=lost+found"
+        volumeMounts:
+          - name: mysql
+            mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "ebs-sc"
+      resources:
+        requests:
+          storage: 2Gi

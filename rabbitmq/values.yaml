@@ -1,0 +1,2 @@
+stateful: 
+  replicas: 2
